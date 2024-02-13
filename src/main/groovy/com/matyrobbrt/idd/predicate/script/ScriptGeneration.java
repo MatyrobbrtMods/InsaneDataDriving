@@ -26,6 +26,10 @@ public class ScriptGeneration {
         return getEmptyClass("Generated_Predicate_" + predicateType.id());
     }
 
+    public static Class<?> getReferenceClass(PredicateType<?> predicateType) {
+        return getReferenceClass("PredicateReference_" + predicateType.id());
+    }
+
     private static final Map<String, Class<?>> CLASSES = new ConcurrentHashMap<>();
 
     public static Class<?> getReferenceClass(String name) {

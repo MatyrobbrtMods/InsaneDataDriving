@@ -4,6 +4,7 @@ package com.matyrobbrt.idd.predicate.script
 import com.matyrobbrt.idd.predicate.PredicateType
 import com.matyrobbrt.idd.util.codec.CodecDecomposer
 import com.mojang.datafixers.util.Pair
+import com.mojang.logging.LogUtils
 import com.mojang.serialization.Codec
 import com.mojang.serialization.DynamicOps
 import net.minecraft.resources.ResourceLocation
@@ -11,7 +12,7 @@ import org.codehaus.groovy.reflection.CachedClass
 
 class GScriptGeneration {
     static <T> void define(CodecDecomposer dec, Class <?> clz, PredicateType predicate, Map<Pair<ResourceLocation, Collection<String>>, Codec<T>> reg) {
-        final objClass = ScriptGeneration.getReferenceClass("PredicateReference_${predicate.id()}")
+        final objClass = ScriptGeneration.getReferenceClass(predicate)
 
         objClass.metaClass.and << { other ->
             return objClass.newInstance(predicate.concat(delegate.reference, other.reference))
@@ -42,7 +43,9 @@ class GScriptGeneration {
                 final decoder = { Object object, input ->
                     final DynamicOps<Object> ops = object.ops
                     return objClass.newInstance(codec.decode(ops, input)
-                            .result().orElseThrow().first)
+                            .resultOrPartial({
+                                LogUtils.getLogger().error("Failed to decode: $it; input: $input; type: $id")
+                            }).orElseThrow().first)
                 }
 
                 if (type instanceof FieldType.Object) {
@@ -138,5 +141,9 @@ class GScriptGeneration {
             parent = newCls
         }
         return parent
+    }
+
+    static void removeMethods(MetaClass cls, Object other) {
+        cls.is = other.metaClass.is
     }
 }

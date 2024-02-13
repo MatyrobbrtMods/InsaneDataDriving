@@ -1,5 +1,6 @@
 package com.matyrobbrt.idd.util.codec;
 
+import com.matyrobbrt.idd.predicate.PredicateCodec;
 import com.matyrobbrt.idd.predicate.PredicateType;
 import com.matyrobbrt.idd.predicate.script.FieldType;
 import com.matyrobbrt.idd.util.Codecs;
@@ -38,6 +39,7 @@ public class CodecDecomposer {
     public CodecDecomposer registerPrimitives() {
         return registerCodec(Codec.STRING, FieldType.Primitive.STRING)
                 .registerCodec(Codec.INT, FieldType.Primitive.INT)
+                .registerCodec(Codec.DOUBLE, FieldType.Primitive.DOUBLE)
 
                 // TODO - we need to support comapFlatMap
                 .registerCodec(ResourceLocation.CODEC, FieldType.Primitive.STRING);
@@ -52,7 +54,7 @@ public class CodecDecomposer {
                     return null;
                 })
                 .registerCodec(codec -> codec instanceof Codecs.ListOrSingleCodec<?> lst ? new FieldType.List(decomposeUnsafe(lst.simpleCodec())) : null)
-                .registerCodec(codec -> codec instanceof PredicateType<?> pred ? new FieldType.Predicate(pred) : null);
+                .registerCodec(codec -> codec instanceof PredicateCodec<?> pred ? new FieldType.Predicate(pred.type()) : null);
     }
 
     public FieldType decomposeUnsafe(Codec<?> codec) {

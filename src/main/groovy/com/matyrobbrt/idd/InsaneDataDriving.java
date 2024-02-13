@@ -6,15 +6,17 @@ import com.matyrobbrt.idd.block.toolaction.CombinedToolModification;
 import com.matyrobbrt.idd.block.toolaction.ConstantToolModification;
 import com.matyrobbrt.idd.block.toolaction.StateMatchesToolModification;
 import com.matyrobbrt.idd.block.toolaction.ToolModificationRegistry;
-import com.matyrobbrt.idd.predicate.PredicateReference;
+import com.matyrobbrt.idd.predicate.PredicateCodec;
+import com.matyrobbrt.idd.predicate.PredicateTypes;
+import com.matyrobbrt.idd.predicate.entity.EntityPredicate;
 import com.matyrobbrt.idd.predicate.entity.EntityPredicates;
-import com.matyrobbrt.idd.predicate.script.GScriptGeneration;
-import com.matyrobbrt.idd.predicate.script.ScriptGeneration;
-import com.matyrobbrt.idd.util.codec.CodecDecomposer;
-import com.mojang.datafixers.util.Pair;
-import groovy.lang.Binding;
-import groovy.lang.GroovyShell;
+import com.matyrobbrt.idd.predicate.item.ItemPredicates;
+import com.matyrobbrt.idd.predicate.number.NumberPredicates;
+import com.mojang.logging.LogUtils;
 import net.minecraft.advancements.critereon.StatePropertiesPredicate;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.RegistryOps;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.JavaOps;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FenceGateBlock;
@@ -25,11 +27,11 @@ import net.neoforged.neoforge.common.ToolActions;
 import net.neoforged.neoforge.common.data.DataMapProvider;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
+import org.intellij.lang.annotations.Language;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Mod("idd")
 public class InsaneDataDriving {
@@ -38,6 +40,8 @@ public class InsaneDataDriving {
         BlockFrictionRegistry.REGISTRY.register(bus);
         ToolModificationRegistry.REGISTRY.register(bus);
         EntityPredicates.REGISTRY.register(bus);
+        ItemPredicates.REGISTRY.register(bus);
+        NumberPredicates.REGISTRY.register(bus);
 
         bus.addListener(RegisterDataMapTypesEvent.class, event -> event.register(ToolModificationRegistry.DATA_MAP));
 
@@ -60,29 +64,26 @@ public class InsaneDataDriving {
         }));
 
         bus.addListener(FMLCommonSetupEvent.class, event -> {
-            final var cls = ScriptGeneration.getOrGenerateOwner(EntityPredicates.TYPE);
-            GScriptGeneration.define(new CodecDecomposer()
-                    .registerDefaults()
-                    .registerPrimitives(), cls, EntityPredicates.TYPE, EntityPredicates.REGISTRY.registry()
-                    .holders().collect(Collectors.toMap(
-                            h -> {
-                                final var id = h.unwrapKey().orElseThrow().location();
-                                return new Pair<>(id, EntityPredicates.TYPE.getAliases().get(id));
-                            },
-                            h -> h.value()
-                    )));
+            PredicateTypes.register(EntityPredicates.TYPE);
+            PredicateTypes.register(ItemPredicates.TYPE);
+            PredicateTypes.register(NumberPredicates.TYPE);
+            PredicateTypes.init();
 
-            try {
-                final var instance = cls.newInstance();
-                DefaultGroovyMethods.getMetaClass(instance).setProperty(instance, "ops", JavaOps.INSTANCE);
-                final var shell = new GroovyShell(new Binding());
-                shell.setVariable("entity", instance);
-                System.out.println(((PredicateReference)
-                    shell.evaluate("~(entity.is('minecraft:allay') | entity.is(entity: 'minecraft:player')) & entity.isOnFire()"))
-                        .getReference());
-            } catch (Exception ignored) {
-                throw new RuntimeException(ignored);
-            }
+            @Language("groovy")
+            final String decoding = """
+                ~is('allay') & (~isOnFire() | isHolding(
+                    hand: 'main_hand',
+                    item: item.is('carrot') & (item.count(number.equal(15)) | item.count(number.greater(20)))
+                ))""";
+            System.out.println(EntityPredicates.CODEC.decode(new PredicateCodec.PredicateOps<Object>(
+                    RegistryOps.create(JavaOps.INSTANCE, new RegistryOps.RegistryInfoLookup() {
+                        @Override
+                        public <T> Optional<RegistryOps.RegistryInfo<T>> lookup(ResourceKey<? extends Registry<? extends T>> pRegistryKey) {
+                            return Optional.empty();
+                        }
+                    }),
+                    true
+            ), decoding).resultOrPartial(LogUtils.getLogger()::error).orElseThrow().getFirst());
 
             System.exit(0);
         });

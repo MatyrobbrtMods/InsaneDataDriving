@@ -1,9 +1,9 @@
 package com.matyrobbrt.idd.predicate;
 
 import com.google.common.collect.Multimap;
+import com.mojang.serialization.Codec;
+import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
-
-import java.util.List;
 
 public interface PredicateType<T> {
     String id();
@@ -13,6 +13,8 @@ public interface PredicateType<T> {
     T or(T a, T b);
 
     T not(T a);
+
+    Registry<Codec<T>> registry();
 
     Multimap<ResourceLocation, String> getAliases();
 }

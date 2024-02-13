@@ -2,6 +2,7 @@ package com.matyrobbrt.idd.predicate.script;
 
 import com.matyrobbrt.idd.predicate.PredicateType;
 
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -19,7 +20,7 @@ public sealed interface FieldType {
 
         @Override
         public Class<?> resolveType() {
-            return ScriptGeneration.getOrGenerateOwner(type);
+            return ScriptGeneration.getReferenceClass(type);
         }
     }
 
@@ -31,7 +32,7 @@ public sealed interface FieldType {
 
         @Override
         public Class<?> resolveType() {
-            return List.class;
+            return java.util.List.class;
         }
     }
 
@@ -103,6 +104,7 @@ public sealed interface FieldType {
     final class Primitive<T> implements FieldType {
         public static final Primitive<String> STRING = new Primitive<>(String.class);
         public static final Primitive<Integer> INT = new Primitive<>(int.class);
+        public static final Primitive<Double> DOUBLE = new Primitive<>(double.class);
 
         public final Class<T> type;
 

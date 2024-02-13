@@ -43,6 +43,11 @@ public class EntityPredicates {
         public Multimap<ResourceLocation, String> getAliases() {
             return REGISTRY.aliases;
         }
+
+        @Override
+        public Registry<Codec<EntityPredicate>> registry() {
+            return REGISTRY.registry();
+        }
     };
 
     public static final Codec<EntityPredicate> CODEC = new PredicateCodec<>(
@@ -55,4 +60,5 @@ public class EntityPredicates {
     public static final Codec<OrEntityPredicate> OR = REGISTRY.register("or", OrEntityPredicate.CODEC);
 
     public static final Codec<IsOnFireEntityPredicate> IS_ON_FIRE = REGISTRY.register(IsOnFireEntityPredicate.CODEC, "is_on_fire", "isOnFire");
+    public static final Codec<IsHoldingEntityPredicate> IS_HOLDING = REGISTRY.register(IsHoldingEntityPredicate.CODEC, "is_holding", "isHolding");
 }
