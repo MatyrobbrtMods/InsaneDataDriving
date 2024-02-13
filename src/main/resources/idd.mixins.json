@@ -1,0 +1,8 @@
+{
+  "package": "com.matyrobbrt.idd.mixin",
+  "mixins": [
+    "BlockMixin"
+  ],
+  "minVersion": "0.8",
+  "required": true
+}

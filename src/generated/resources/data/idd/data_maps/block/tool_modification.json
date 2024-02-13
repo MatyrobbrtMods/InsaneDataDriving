@@ -1,0 +1,41 @@
+{
+  "values": {
+    "minecraft:acacia_fence_gate": {
+      "axe_strip": {
+        "type": "idd:combined",
+        "modifications": [
+          {
+            "type": "idd:state_matches",
+            "predicate": {
+              "open": "true"
+            },
+            "transformation": {
+              "type": "idd:constant",
+              "value": {
+                "Name": "minecraft:iron_block"
+              }
+            }
+          },
+          {
+            "type": "idd:constant",
+            "value": {
+              "Name": "minecraft:dirt"
+            }
+          }
+        ]
+      },
+      "till": {
+        "type": "idd:constant",
+        "value": {
+          "Name": "minecraft:birch_fence_gate",
+          "Properties": {
+            "facing": "north",
+            "in_wall": "false",
+            "open": "true",
+            "powered": "false"
+          }
+        }
+      }
+    }
+  }
+}
